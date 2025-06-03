@@ -109,7 +109,7 @@ Tahap data preparation bertujuan untuk membersihkan, mengubah, dan menyiapkan da
 - Menggabungkan semua dataframe yang sudah dibuat menjadi tourisms
 - teks processing, membersihkan kolom deksripsi dengan mengubah lowercase, hilangkan angka, hilangkan tanda baca, hilangkan whitespace berlebih dan kolom deskripsi digabungkan ke dataframe tourisms
 - Membuat dataframe tourisms_unique untuk tempat wisata dan Penghapusan Duplikat
-   - Menghapus duplikasi tempat wisata berdasarkan nama dari dataframe taourisms menggunakan drop_duplicates dan mereset indeksnya, agar tidak muncul rekomendasi dari entitas yang sama.
+   - Menghapus duplikasi tempat wisata berdasarkan nama dari dataframe tourisms menggunakan drop_duplicates dan mereset indeksnya, agar tidak muncul rekomendasi dari entitas yang sama.
 
 ## Modeling
 Pada tahap modeling, digunakan dua algoritma sistem rekomendasi yang berbeda, yaitu:
