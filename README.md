@@ -108,6 +108,8 @@ Tahap data preparation bertujuan untuk membersihkan, mengubah, dan menyiapkan da
   - Ekstrak data kota ke dalam list
 - Menggabungkan semua dataframe yang sudah dibuat menjadi tourisms
 - teks processing, membersihkan kolom deksripsi dengan mengubah lowercase, hilangkan angka, hilangkan tanda baca, hilangkan whitespace berlebih dan kolom deskripsi digabungkan ke dataframe tourisms
+- Membuat dataframe tourisms_unique untuk tempat wisata dan Penghapusan Duplikat
+   - Menghapus duplikasi tempat wisata berdasarkan nama dari dataframe taourisms menggunakan drop_duplicates dan mereset indeksnya, agar tidak muncul rekomendasi dari entitas yang sama.
 
 ## Modeling
 Pada tahap modeling, digunakan dua algoritma sistem rekomendasi yang berbeda, yaitu:
@@ -120,15 +122,13 @@ Pada metode content-based filtering, sistem merekomendasikan tempat wisata berda
 #### Cara Kerja dan Parameter
 Langkah-langkah yang dilakukan dalam proses content-based filtering pada sistem ini adalah sebagai berikut:
 ##### Alur Kerja Fungsi rekomendasi_wisata:
-1. Membuat dataframe untuk tempat wisata dan Penghapusan Duplikat
- - Duplikasi tempat wisata berdasarkan nama dihapus menggunakan drop_duplicates, agar tidak muncul rekomendasi dari entitas yang sama.
-2. Penggabungan Fitur
+1. Penggabungan Fitur
 - Atribut category, description, dan city digabungkan ke dalam satu kolom combined, untuk mewakili keseluruhan karakteristik tempat wisata.
-3. Vektorisasi Teks
+2. Vektorisasi Teks
 - Data `combined` diubah menjadi vektor numerik menggunakan `CountVectorizer` (dengan penghapusan stop words).
-4. Perhitungan Similarity
+3. Perhitungan Similarity
 - Matriks Cosine Similarity dihitung dari hasil vektorisasi untuk mengetahui tingkat kemiripan antar tempat wisata.
-5. Pemilihan Top-N Rekomendasi
+4. Pemilihan Top-N Rekomendasi
 - Tempat wisata dengan skor kemiripan tertinggi (kecuali tempat input) diurutkan dan dipilih Top-N untuk ditampilkan.
 
 #### Output
