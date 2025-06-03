@@ -94,30 +94,20 @@ Tahap data preparation bertujuan untuk membersihkan, mengubah, dan menyiapkan da
 - tourisms: berisi informasi tentang tempat wisata, seperti name, category, city, dan description.
 - rating: berisi data rating dari pengguna terhadap tempat wisata, dengan kolom User_Id, Place_Id, dan Place_Ratings.
 - user: berisi informasi pengguna (tidak digunakan langsung dalam pemodelan, tetapi disiapkan untuk pengembangan lebih lanjut)
-
-### General Data Preparation
-- Pemeriksaan dan penghapusan nilai null
-Data diperiksa untuk memastikan tidak terdapat nilai kosong (null) pada kolom-kolom penting seperti name, category, Place_Id, dan Place_Ratings.
-- Pembersihan teks kategori
-Kolom category dibersihkan dari karakter non-alfabet untuk memastikan konsistensi format, yang penting dalam analisis berbasis konten.
-- Pembuatan kolom fitur gabungan
-Kolom baru combined_features dibuat dengan menggabungkan name dan category sebagai representasi konten dari tempat wisata. Kolom ini akan digunakan dalam model content-based filtering
-
-#### Data Preparation untuk Content-Based Filtering
-Untuk mendukung sistem rekomendasi berbasis konten, beberapa langkah tambahan dilakukan
-- Vektorisasi fitur teks menggunakan TF-IDF
-Kolom combined_features diubah ke dalam bentuk numerik menggunakan metode TF-IDF (Term Frequency–Inverse Document Frequency), untuk menghitung bobot kata pada tiap tempat wisata..
-- Perhitungan similarity antar destinasi
-Menggunakan cosine similarity, sistem menghitung tingkat kemiripan antar tempat wisata berdasarkan nilai TF-IDF
-
-### Data Preparation untuk Collaborative Filtering
-- Membuat user-item matrix (pivot table)
-Data rating diubah ke dalam format matriks pengguna vs tempat wisata, dengan nilai berupa rating yang diberikan. Nilai kosong diisi dengan nol untuk menandakan tempat yang belum dirating.
-- Matrix factorization dengan SVD
-Metode Truncated SVD (Singular Value Decomposition) digunakan untuk mendekomposisi matriks rating menjadi bentuk vektor yang lebih padat (dimensi lebih rendah), yang memungkinkan sistem mempelajari pola tersembunyi antara pengguna dan tempat wisata
-- Membagi dataset menjadi data pelatihan dan pengujian
-Pembagian data dilakukan untuk melatih model dan mengevaluasi performanya menggunakan data yang belum pernah dilihat oleh model.
-pembagian data dilakukan menggunakan fungsi train_test_split dari sklearn.model_selection. Proses ini membagi data rating menjadi data pelatihan (train_data) dan data pengujian (test_data) dengan proporsi 80:20.
+- Menggabungkan dataset tourism dan rating berdasarkan Place_Id.
+- Menangani Missing Value
+- Menghapus data duplikat dengan drop_duplicates().
+- KOnversi Palce_Ratings dengan mengubah tipe data dan memastikan kolom price aman dengan nilai 0 dan cek apakah ada NaN akibat error
+- Penanganan Price dengan Cek apakah 0 berarti gratis atau data tidak tersedia dan ditangani dengan median
+- Menggabungkan Dataframe city dan category sebagai fitur tambahan CBF
+- pembuatan list:
+  - Konversi kolom Place_Id menjadi list dan simpan sebagai place_id
+  - Ambil nilai dari kolom Place_Name dalam bentuk list
+  - Simpan kategori tempat wisata sebagai list
+  - Ubah deskripsi tempat wisata menjadi list
+  - Ekstrak data kota ke dalam list
+- Menggabungkan semua dataframe yang sudah dibuat menjadi tourisms
+- teks processing, membersihkan kolom deksripsi dengan mengubah lowercase, hilangkan angka, hilangkan tanda baca, hilangkan whitespace berlebih dan kolom deskripsi digabungkan ke dataframe tourisms
 
 ## Modeling
 Pada tahap modeling, digunakan dua algoritma sistem rekomendasi yang berbeda, yaitu:
@@ -125,92 +115,108 @@ Pada tahap modeling, digunakan dua algoritma sistem rekomendasi yang berbeda, ya
 - Collaborative Filtering menggunakan Singular Value Decomposition (SVD)
 
 ### Content-Based Filtering
-Pada metode content-based filtering, sistem merekomendasikan tempat wisata berdasarkan kesamaan kontennya dengan tempat yang telah disukai atau diberikan rating tinggi oleh pengguna. Informasi konten yang digunakan berasal dari atribut seperti name dan category dari tempat wisata.
+Pada metode content-based filtering, sistem merekomendasikan tempat wisata berdasarkan kesamaan kontennya dengan tempat yang telah dipilih oleh pengguna. Informasi konten yang digunakan berasal dari atribut seperti kategori, deskripsi, dan kota dari tempat wisata.
 
 #### Cara Kerja dan Parameter
 Langkah-langkah yang dilakukan dalam proses content-based filtering pada sistem ini adalah sebagai berikut:
-Alur Kerja Fungsi recommend_places
-- Input Tempat Wisata
-  - Pengguna memberikan nama tempat wisata Seperti "Air Mancur Menari" sebagai input.
-- Pencarian Indeks
-  - Sistem mencari indeks tempat wisata tersebut di dalam DataFrame tourisms untuk mengetahui posisinya dalam matriks fitur.
-- Perhitungan Similarity
-  - Cosine Similarity digunakan untuk menghitung tingkat kemiripan antara tempat wisata input dan seluruh tempat wisata lain berdasarkan fitur gabungan teks (combined_features). Fitur ini merupakan penggabungan 
-    nama dan kategori tempat wisata, yang telah diubah menjadi representasi numerik menggunakan TF-IDF.
-- Penyortiran Skor Kesamaan
-  - Sistem mengurutkan semua tempat wisata berdasarkan skor kesamaan dengan tempat wisata input, dari yang paling mirip hingga yang paling tidak mirip.
-- Pemilihan Top-N Rekomendasi
-  - Tempat wisata yang sama dengan input akan diabaikan. Sistem akan menampilkan Top-N tempat wisata yang paling mirip berdasarkan nilai Cosine Similarity tertinggi.
-- Output
-  - Sistem mengembalikan informasi seperti name, category, city, dan description dari tempat wisata yang direkomendasikan.
+##### Alur Kerja Fungsi rekomendasi_wisata:
+1. Membuat dataframe untuk tempat wisata dan Penghapusan Duplikat
+ - Duplikasi tempat wisata berdasarkan nama dihapus menggunakan drop_duplicates, agar tidak muncul rekomendasi dari entitas yang sama.
+2. Penggabungan Fitur
+- Atribut category, description, dan city digabungkan ke dalam satu kolom combined, untuk mewakili keseluruhan karakteristik tempat wisata.
+3. Vektorisasi Teks
+- Data `combined` diubah menjadi vektor numerik menggunakan `CountVectorizer` (dengan penghapusan stop words).
+4. Perhitungan Similarity
+- Matriks Cosine Similarity dihitung dari hasil vektorisasi untuk mengetahui tingkat kemiripan antar tempat wisata.
+5. Pemilihan Top-N Rekomendasi
+- Tempat wisata dengan skor kemiripan tertinggi (kecuali tempat input) diurutkan dan dipilih Top-N untuk ditampilkan.
+
+#### Output
+Sistem mengembalikan informasi `name`, `category`, `description`, dan `city` dari tempat wisata yang direkomendasikan.
 
 #### Teknologi yang Digunakan
-- TF-IDF Vectorization
-Mengubah data teks gabungan (nama dan kategori) menjadi vektor numerik berdasarkan frekuensi kata dan pentingnya kata dalam dokumen.
+- CountVectorizer
+  Mengubah teks gabungan menjadi vektor berdasarkan frekuensi kata (bag-of-words).
 - Cosine Similarity
-Digunakan untuk menghitung kemiripan antar tempat wisata. Nilainya berkisar antara 0 hingga 1, di mana nilai mendekati 1 menunjukkan kemiripan yang tinggi antar tempat.
+  Mengukur tingkat kemiripan antar vektor tempat wisata.
 
 #### Rekomendasi
-Setelah proses perhitungan kesamaan dilakukan, sistem menyajikan rekomendasi tempat wisata yang memiliki karakteristik paling mirip dengan input pengguna. Rekomendasi berbasis content-based filtering untuk input seperti "Trans Studio Bandung", dan "Air Mancur Menari":
+Sistem menyajikan rekomendasi tempat wisata yang memiliki karakteristik paling mirip dengan input pengguna. Contoh rekomendasi berhasil diberikan untuk:
+- Trans Studio Bandung
+  ![Trans Studio bandung](https://github.com/user-attachments/assets/631b2c11-a158-4ba8-b903-28ca46223216)
+
+  
+- Air Mancur Menari
+ ![Air mancur menari](https://github.com/user-attachments/assets/fd675bcc-f212-4adb-8e0e-59c9292a4ae6)
+
+  
+- Pantai Marina
+  ![Pantai marina](https://github.com/user-attachments/assets/dd24300f-9ac9-4f29-93d4-5133d4bf781a)
+
 
 ### Collaborative Filtering
-Model collaborative filtering dalam proyek ini dilatih menggunakan data rating pengguna terhadap tempat wisata. Model mempelajari pola preferensi dengan menguraikan matriks rating menjadi sejumlah faktor laten yaitu fitur tersembunyi yang merepresentasikan hubungan antara pengguna dan destinasi wisata.
+Model collaborative filtering dalam proyek ini mempelajari pola rating pengguna terhadap tempat wisata menggunakan pendekatan matrix factorization. Sistem ini dapat merekomendasikan tempat wisata baru yang belum pernah dinilai oleh pengguna namun kemungkinan besar akan disukai.
 
 #### Cara Kerja
-Langkah-langkah dalam membangun dan menjalankan sistem rekomendasi collaborative filtering ini adalah:
-#### Alur Kerja Sistem Rekomendasi
-Pembuatan User-Item Matrix
-Dibentuk pivot table dari data rating dengan baris berupa User_Id, kolom berupa Place_Id, dan nilai berupa Place_Ratings.
-- Matriks ini kemudian digunakan untuk membentuk representasi preferensi pengguna terhadap tempat wisata.
-Pemodelan dengan SVD (Singular Value Decomposition)
-- Algoritma SVD digunakan untuk mendekomposisi matriks user-item menjadi komponen laten.
-- Hasil dekomposisi menghasilkan matriks fitur pengguna dan fitur tempat wisata dalam bentuk vektor berdimensi lebih rendah.
-- Ini memungkinkan model mengenali pola tersembunyi seperti jenis tempat yang disukai oleh kelompok pengguna tertentu.
-Prediksi Rating
-- Setelah pelatihan model selesai, dilakukan rekonstruksi matriks prediksi (pred_matrix) dari hasil dot product antara fitur pengguna dan fitur destinasi.
-- Prediksi ini berisi nilai rating estimasi dari setiap pengguna untuk tempat wisata yang belum mereka rating sebelumnya.
-Fungsi get_recommendations
-- Fungsi ini menerima User_Id, DataFrame tourisms, serta rating_matrix dan pred_matrix sebagai input.
-- Sistem mengidentifikasi tempat wisata yang belum pernah dirating oleh pengguna, lalu mengambil prediksi skor tertinggi dari tempat-tempat tersebut.
-- Tempat wisata dengan skor prediksi tertinggi dipilih sebagai rekomendasi.
- Output
-- Fungsi mengembalikan nama, kategori, kota, dan deskripsi dari tempat wisata yang direkomendasikan untuk pengguna tertentu.
+##### Alur Kerja Sistem Rekomendasi:
+1. Pembuatan User-Item Matrix
+- Menggunakan pivot table, data rating diubah menjadi matriks pengguna-tempat, dengan pengguna sebagai baris dan tempat sebagai kolom. Nilai adalah rating yang diberikan.
+2. Pemodelan dengan SVD
+- Matriks rating didekomposisi menggunakan TruncatedSVD menjadi matriks pengguna dan tempat wisata berdimensi rendah (n\_components=20).
+- Pendekatan ini memungkinkan identifikasi pola preferensi tersembunyi.
+3. Prediksi Rating
+- Setelah pembelajaran, matriks prediksi dibentuk dari hasil perkalian dot product antara representasi pengguna dan tempat wisata.
+4. Fungsi `get_recommendations`
+- Fungsi ini menerima `User_Id`, memeriksa tempat wisata yang belum dirating, lalu merekomendasikan tempat dengan prediksi skor tertinggi.
 
-### Teknologi yang Digunakan
-- TruncatedSVD (Singular Value Decomposition)
-Digunakan untuk memproyeksikan matriks sparse (user-item) ke dalam ruang dimensi yang lebih rendah. Algoritma efisien untuk model yang dianalisa
+#### Output
+- Rekomendasi diberikan dalam bentuk `name`, `category`, dan `city` dari tempat wisata yang belum pernah dirating tetapi kemungkinan besar relevan.
+
+#### Teknologi yang Digunakan
+- TruncatedSVD
+  Digunakan untuk mengurangi dimensi data dan mempelajari fitur laten dari pengguna dan item.
 - Dot Product Reconstruction
-Digunakan untuk mengalikan hasil matriks pengguna dan tempat wisata kembali menjadi prediksi rating.
+  Digunakan untuk merekonstruksi prediksi rating antara pengguna dan tempat wisata.
 
 ### Rekomendasi Top-N Tempat Wisata
-Rekomendasi dilakukan menggunakan ID 22, ID 67, ID 1
+Berikut adalah contoh hasil rekomendasi berdasarkan Collaborative Filtering:
+- Untuk User ID 1
+  ![CF id 1](https://github.com/user-attachments/assets/33523097-92d4-4e04-a5b2-cf3f8b64a7b0)
+
+- Untuk User ID 2
+  ![CF id 2](https://github.com/user-attachments/assets/e50c650f-13fb-4175-abf8-375b309d6380)
+
+- Untuk User ID 3
+  ![CF id 3](https://github.com/user-attachments/assets/6157d673-c1db-4336-839c-113395b8207f)
+
 
 ### Kelebihan dan Kekurangan
 
 #### Content-Based Filtering
 Kelebihan:
-- Pendekatan ini merekomendasikan tempat wisata berdasarkan kemiripan kontennya, seperti nama dan kategori. Sistem membandingkan fitur dari tempat yang disukai pengguna dengan tempat lainnya menggunakan algoritma Cosine Similarity.
-- Cocok untuk pengguna baru yang belum memiliki banyak riwayat interaksi, karena hanya mengandalkan informasi dari konten tempat wisata itu sendiri.
-- Hasil rekomendasi lebih relevan secara personal karena berdasarkan preferensi sebelumnya.
+- Sistem ini merekomendasikan tempat wisata berdasarkan kemiripan konten dari atribut seperti kategori, deskripsi, dan kota tempat wisata. Proses ini dilakukan dengan menggabungkan fitur-fitur tersebut ke dalam satu kolom, kemudian dianalisis menggunakan CountVectorizer dan Cosine Similarity.
+- Cocok digunakan untuk pengguna baru (cold-start user) yang belum memiliki riwayat interaksi atau rating, karena sistem hanya membutuhkan informasi dari tempat wisata itu sendiri.
+- Rekomendasi yang dihasilkan lebih sesuai dengan minat pengguna karena berdasarkan konten yang mirip dengan tempat wisata yang telah dipilih sebelumnya.
 
 Kekurangan:
-- Rekomendasi cenderung terbatas hanya pada tempat wisata yang mirip dengan yang sudah disukai, sehingga kurang bervariasi.
-- Tempat baru yang belum punya cukup informasi bisa sulit untuk direkomendasikan.
-- Sistem tidak mengenali selera pengguna di luar pola yang sudah ada, sehingga kurang adaptif pada perubahan minat.
+- Rekomendasi yang dihasilkan cenderung terbatas pada tempat-tempat wisata yang mirip secara deskripsi atau kategori, sehingga kurang memberikan keberagaman.
+- Tempat wisata baru yang belum memiliki deskripsi yang cukup atau kurang informatif akan sulit untuk direkomendasikan.
+- Sistem ini tidak dapat memahami preferensi pengguna secara luas karena hanya fokus pada kesamaan konten, bukan perilaku pengguna lainnya.
 
 #### Collaborative Filtering
 Kelebihan:
-- Menggunakan data rating dari banyak pengguna untuk mengenali pola preferensi tersembunyi. Dengan metode SVD, sistem dapat memprediksi tempat wisata yang disukai meskipun belum pernah dikunjungi.
-- Tidak perlu informasi konten dari tempat wisata; cukup berdasarkan perilaku pengguna lain.
-- Dapat menghasilkan rekomendasi yang lebih beragam karena mempertimbangkan pengalaman kolektif pengguna lain.
+- Menggunakan data rating dari banyak pengguna dan melakukan dekomposisi matriks menggunakan TruncatedSVD untuk menemukan pola tersembunyi dalam preferensi pengguna.
+- Sistem ini dapat merekomendasikan tempat wisata yang belum pernah dikunjungi oleh pengguna, selama ada pola kesamaan dengan pengguna lain.
+- Lebih fleksibel dan dapat memberikan rekomendasi yang lebih beragam, karena tidak bergantung pada konten tempat wisata tetapi pada perilaku kolektif pengguna
 
 Kekurangan:
-- Tidak efektif untuk pengguna baru yang belum memberi rating (cold start).
-- Jika sebagian besar tempat belum dirating, sistem kesulitan memberikan rekomendasi yang tepat (sparse matrix).
--  Proses training dan prediksi lebih berat secara komputasi dibanding content-based.
+- Tidak efektif untuk pengguna baru yang belum memberikan rating (masalah cold-start), karena sistem membutuhkan data interaksi historis.
+- Jika sebagian besar tempat wisata belum banyak dirating, sistem akan menghadapi masalah data sparsity dan kesulitan memberikan rekomendasi yang akurat.
+- Komputasi untuk training dan prediksi memerlukan sumber daya yang lebih besar dibandingkan dengan metode content-based, terutama saat menggunakan matrix factorization.
 
 Kesimpulan:
-Kedua pendekatan memiliki keunggulan dan keterbatasan masing-masing. Dengan menggabungkan content-based dan collaborative filtering, sistem rekomendasi dapat saling melengkapi dan memberikan hasil yang lebih optimal.
+- Metode content-based filtering bekerja dengan baik untuk memberikan rekomendasi yang relevan dan personal berdasarkan konten dari tempat wisata. Sementara itu, collaborative filtering mampu mengenali preferensi pengguna secara lebih luas dan memberikan rekomendasi yang lebih bervariasi, dengan memanfaatkan data dari pengguna lain.
+- Namun, kedua pendekatan ini memiliki keterbatasan masing-masing. Oleh karena itu, dalam praktiknya, penggabungan kedua metode ini (hybrid system) dapat menjadi solusi terbaik untuk mengoptimalkan hasil rekomendasi—mengatasi masalah cold-start dan sparsity sekaligus mempertahankan relevansi rekomendasi.
 
 ## Evaluation
 ### Content-Based Filtering
@@ -225,43 +231,49 @@ Metrik ini digunakan karena dapat menilai kualitas relevansi dan cakupan dari re
 #### Hasil Evaluasi
 Evaluasi dilakukan pada dua tempat wisata sebagai input:
 1. Air Mancur Menari
-- Precision\@5: **17.03%
-- Recall\@5: 100.00%
-Menunjukkan bahwa dari 5 rekomendasi teratas, hanya sebagian kecil yang benar-benar relevan, tetapi sistem berhasil menangkap semua tempat yang mirip dari daftar lengkap.
+- Precision@5: 15.49%
+- Recall@5: 100.00%
+Sistem berhasil mengidentifikasi semua tempat wisata yang mirip dengan Air Mancur Menari (recall sempurna), meskipun hanya sebagian kecil dari rekomendasi teratas yang benar-benar relevan. Hal ini menunjukkan bahwa sistem memiliki cakupan yang baik, namun masih perlu perbaikan dalam menyaring hasil yang paling tepat di posisi teratas.
 2. Trans Studio Bandung
-- Precision\@5: 1.57%
-- Recall\@5: 100.00%
-Sistem berhasil mencakup semua tempat yang mirip, tetapi sebagian besar rekomendasi tidak cukup relevan di posisi teratas.
-Hasil ini mengindikasikan bahwa cakupan sistem cukup baik (recall tinggi), namun tingkat ketepatan (precision) masih perlu ditingkatkan agar rekomendasi lebih fokus pada tempat yang paling relevan.
+- Precision@5: 8.16%
+- Recall@5: 100.00%
+Semua tempat wisata yang relevan berhasil teridentifikasi oleh sistem, tetapi proporsi rekomendasi yang benar-benar relevan masih rendah. Ini menandakan bahwa meskipun sistem memiliki jangkauan yang luas, kualitas hasil yang direkomendasikan pada posisi teratas masih bisa ditingkatkan
+3. Pantai Marina
+- Precision@5: 48.16%
+- Recall@5: 100.00%
+Rekomendasi untuk Pantai Marina menunjukkan hasil yang sangat baik, dengan tingkat ketepatan tinggi pada lima hasil teratas. Hal ini menunjukkan bahwa sistem mampu menempatkan tempat wisata yang relevan di posisi awal sekaligus mencakup seluruh tempat mirip yang tersedia, menjadikan kombinasi precision dan recall-nya sangat optimal.
 
 ### Collaborative Filtering
 #### Metrik Evaluasi
 Evaluasi collaborative filtering dilakukan dengan dua metrik error prediktif:
-1. RMSE (Root Mean Squared Error)
-  Mengukur rata-rata kesalahan kuadrat antara rating prediksi dengan rating sebenarnya.
+1.RMSE (Root Mean Squared Error)
+Mengukur rata-rata kesalahan kuadrat antara rating prediksi dengan rating sebenarnya. Semakin kecil nilai RMSE, semakin baik akurasi prediksi model.
 2. MAE (Mean Absolute Error)
-  Mengukur rata-rata selisih absolut antara prediksi dan nilai rating asli.
+Mengukur rata-rata selisih absolut antara prediksi dan nilai rating asli. MAE yang lebih rendah menunjukkan bahwa prediksi model semakin mendekati rating aktual pengguna.
 
 #### Hasil Evaluasi
-RMSE: 2.5964
-MAE: 2.3106
-Nilai RMSE dan MAE yang diperoleh masih tergolong tinggi, menunjukkan bahwa prediksi rating oleh model SVD belum sepenuhnya akurat. Hal ini bisa disebabkan oleh sebaran data rating yang masih terbatas atau sparsity yang tinggi pada dataset.
+RMSE: 3.1634
+MAE: 2.8359
+
+Nilai RMSE dan MAE yang diperoleh masih tergolong tinggi, menunjukkan bahwa prediksi rating oleh model SVD belum sepenuhnya akurat. Hal ini kemungkinan disebabkan oleh keterbatasan data latih, sparsity yang tinggi pada matriks user-item, atau jumlah rating yang tidak seimbang antar pengguna dan tempat wisata.
 
 ### Fungsi Rekomendasi
 Pada collaborative filtering, fungsi `get_recommendations` digunakan untuk:
 1. Menentukan daftar tempat wisata yang belum diberi rating oleh pengguna.
-2. Menghitung prediksi rating terhadap tempat-tempat tersebut.
-3. Mengurutkan dan menampilkan 10 tempat teratas berdasarkan prediksi.
-Fungsi ini membantu sistem memberikan rekomendasi berbasis pola dari pengguna lain yang serupa.
+2. Menghitung prediksi rating terhadap tempat-tempat tersebut menggunakan hasil dekomposisi matriks SVD.
+3. Mengurutkan dan menampilkan 10 tempat teratas berdasarkan skor prediksi tertinggi.
 
+Fungsi ini memungkinkan sistem memberikan rekomendasi berdasarkan pola dan kesamaan perilaku pengguna lain yang memiliki preferensi serupa
+   
 ### Kesimpulan
-Sistem rekomendasi tempat wisata yang dikembangkan telah menggabungkan dua pendekatan:
-- Content-Based Filtering(menggunakan Cosine Similarity):
-  Memberikan rekomendasi berdasarkan kemiripan fitur tempat wisata, cocok untuk pengguna baru atau saat data interaksi masih terbatas.
-- Collaborative Filtering** (menggunakan SVD):
-  Mengandalkan data rating antar pengguna, cocok untuk mengenali pola preferensi yang kompleks.
+Sistem rekomendasi tempat wisata yang dikembangkan telah menggabungkan dua pendekatan utama:
+- Content-Based Filtering (menggunakan Cosine Similarity):
+Memberikan rekomendasi berdasarkan kemiripan fitur tempat wisata (kategori, deskripsi, kota). Cocok digunakan untuk pengguna baru yang belum memiliki histori rating.
+
+- Collaborative Filtering (menggunakan SVD):
+Mengandalkan data rating dari banyak pengguna untuk mengenali pola preferensi tersembunyi. Meskipun hasil evaluasi saat ini menunjukkan prediksi yang belum terlalu akurat, pendekatan ini memiliki potensi tinggi jika jumlah interaksi pengguna bertambah..
 
 Hasil evaluasi menunjukkan:
-* Sistem content-based memiliki cakupan rekomendasi yang baik (recall tinggi), namun precision masih perlu ditingkatkan untuk meningkatkan relevansi rekomendasi teratas.
-* Sistem collaborative filtering menghasilkan prediksi yang belum cukup presisi, namun berpotensi lebih baik jika data rating pengguna lebih lengkap.
-* Kombinasi dua pendekatan ini dapat mengatasi berbagai tantangan, seperti cold start dan sparsity, sekaligus meningkatkan kualitas rekomendasi yang personal dan relevan bagi pengguna.
+- Content-based filtering memberikan cakupan rekomendasi yang baik dengan recall yang tinggi, namun precision masih perlu ditingkatkan agar hasil lebih relevan.
+- Collaborative filtering menunjukkan prediksi yang belum cukup presisi, tetapi dapat ditingkatkan dengan dataset yang lebih lengkap dan padat.
+- Kombinasi kedua pendekatan ini (hybrid system) dapat saling melengkapi, mengatasi tantangan seperti cold start dan sparsity, serta meningkatkan personalisasi dalam sistem rekomendasi tempat wisata.
