@@ -362,4 +362,5 @@ Hasil evaluasi menunjukkan bahwa Content-Based Filtering mampu memberikan cakupa
 
 ### Daftar Pustaka
 [1] G. Adomavicius and A. Tuzhilin, "Toward the next generation of recommender systems: A survey of the state-of-the-art and possible extensions," IEEE Transactions on Knowledge and Data Engineering, vol. 17, no. 6, pp. 734–749, Jun. 2005. [Online]. Available: https://ieeexplore.ieee.org/document/1423975
+
 [2] D. Shrestha, T. Wenan, D. Shrestha, N. Rajkarnikar, and S.-R. Jeong, "Personalized Tourist Recommender System: A Data-Driven and Machine-Learning Approach," Computation, vol. 12, no. 3, p. 59, 2024. [Online]. Available: https://doi.org/10.3390/computation12030059
