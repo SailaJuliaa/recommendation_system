@@ -89,6 +89,12 @@ Berikut adalah kolom-kolom dalam Users Dataset:
 - Location : Lokasi tempat tinggal pengguna.
 - Age : Usia pengguna.
 
+## Exploratory Data Analysis (EDA)
+Exploratory Data Analysis (EDA) merupakan tahap penting dalam proses analisis data yang bertujuan untuk memahami karakteristik dan pola umum dari dataset yang digunakan. Pada tahap ini, dilakukan eksplorasi terhadap data pengguna, data tempat wisata, serta data rating yang diberikan oleh pengguna. Proses ini melibatkan visualisasi dan analisis statistik sederhana untuk mendapatkan gambaran awal mengenai distribusi data, keberagaman informasi, serta potensi masalah yang mungkin ada, seperti outlier atau ketidakseimbangan distribusi.
+
+Dengan memahami struktur dan distribusi data melalui EDA, dapat diperoleh wawasan awal yang berguna dalam proses pemodelan sistem rekomendasi, baik berbasis konten (content-based filtering) maupun kolaboratif (collaborative filtering).
+
+
 ## Data Preparation
 Tahap data preparation bertujuan untuk membersihkan, mengubah, dan menyiapkan data agar dapat digunakan secara optimal dalam pemodelan sistem rekomendasi tempat wisata. Pada proyek ini, terdapat tiga sumber data utama yang digunakan, yaitu:
 - tourisms: berisi informasi tentang tempat wisata, seperti name, category, city, dan description.
