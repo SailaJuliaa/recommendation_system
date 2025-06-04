@@ -12,8 +12,7 @@ Perkembangan teknologi digital telah memberikan dampak positif bagi industri par
    - Wisatawan dapat membandingkan berbagai opsi berdasarkan rating, ulasan, dan fitur yang sesuai dan membantu dalam perencanaan perjalanan yang lebih terstruktur dan efektif.
 
 ### Hasil riset dan referensi 
-Sistem rekomendasi mampu memberikan saran yang dipersonalisasi berdasarkan histori pengguna, rating, lokasi, dan atribut destinasi. Hal ini mendukung konsep smart tourism serta meningkatkan pengalaman pengguna sekaligus memperluas eksposur bagi destinasi-destinasi yang kurang populer.[ https://ieeexplore.ieee.org/document/1423975/footnotes#footnotes ]
-"Adomavicius, G., & Tuzhilin, A. (2005). Toward the next generation of recommender systems: A survey of the state-of-the-art and possible extensions. IEEE Transactions on Knowledge and Data Engineering."
+Sistem rekomendasi mampu memberikan saran yang dipersonalisasi berdasarkan histori pengguna, rating, lokasi, dan atribut destinasi. Hal ini mendukung konsep smart tourism serta meningkatkan pengalaman pengguna sekaligus memperluas eksposur bagi destinasi-destinasi yang kurang populer [1]. Sistem rekomendasi juga telah menjadi komponen penting dalam mendukung keputusan wisatawan, terutama dalam konteks pariwisata cerdas (smart tourism). Dengan memanfaatkan pendekatan berbasis data dan algoritma machine learning, sistem ini mampu memberikan rekomendasi yang dipersonalisasi sesuai dengan karakteristik pengguna, seperti demografi, preferensi individu, hingga tingkat kepuasan pengguna terhadap destinasi yang pernah dikunjungi sebelumnya. Pendekatan ini tidak hanya meningkatkan relevansi hasil rekomendasi, tetapi juga mampu memperbaiki pengalaman wisata secara keseluruhan [2].
 
 ## Business Understanding
 Dalam era digital saat ini, calon wisatawan memiliki akses ke berbagai informasi mengenai destinasi wisata. Meskipun hal ini memberikan keuntungan, banyaknya pilihan justru dapat menimbulkan kebingungan dalam menentukan tujuan yang sesuai. Beberapa permasalahan utama yang perlu dipecahkan dalam pengembangan sistem rekomendasi wisata adalah:
@@ -57,6 +56,9 @@ Memberikan daftar tempat wisata dengan estimasi nilai tertinggi untuk setiap pen
 
 ## Data Understanding
 Dataset yang digunakan dalam proyek ini merupakan data dari kaggle Indonesia-Tourism-Destination. Dataset ini terdiri dari 3 komponen data yang diambil yaitu tourism dengan jumlah data 437 dengaan 13 kolom, data rating dengan jumlah 10000 dengan 3 kolom, dan data user dengan jumlah data 300 dengan 3 kolom. Dataset diambil dari [https://www.kaggle.com/datasets/aprabowo/indonesia-tourism-destination].
+- tourisms: berisi informasi tentang tempat wisata, seperti name, category, city, dan description.
+- rating: berisi data rating dari pengguna terhadap tempat wisata, dengan kolom User_Id, Place_Id, dan Place_Ratings.
+- user: berisi informasi pengguna (tidak digunakan langsung dalam pemodelan, tetapi disiapkan untuk pengembangan lebih lanjut)
 
 1. Tourism Dataset
 Dataset ini memuat informasi tempat wisata dengan total 437 baris dan 13 kolom. Terdapat satu kolom (Unnamed: 11) yang seluruhnya bernilai null dan merupakan kolom kosong yang tidak digunakan. Adapun kolom Time_Minutes memiliki banyak nilai kosong (sekitar 53%), sementara kolom lainnya lengkap tanpa nilai null. Tidak terdapat baris yang duplikat.
@@ -94,12 +96,94 @@ Exploratory Data Analysis (EDA) merupakan tahap penting dalam proses analisis da
 
 Dengan memahami struktur dan distribusi data melalui EDA, dapat diperoleh wawasan awal yang berguna dalam proses pemodelan sistem rekomendasi, baik berbasis konten (content-based filtering) maupun kolaboratif (collaborative filtering).
 
+1. Melihat nilai unique pada dataframe tourism dan rating dengan :
+- jumlah tempat wisata :437
+- Jumlah user: 300
+- Jumlah rating: 10000
+- Jumlah kategori: 6
+  
+2. cek nilai unique category untuk mengetahui nama katergori pada kolom
+- Budaya, Taman Hiburan, Cagar Alam, Bahari, Pusat Perbelanjaan, Tempat Ibadah
+  
+3. categoty count digunakan untuk menghitung jumlah masing-masing kategori wisata yang mungkin berada dalam satu kolom dengan hasil 
+- Taman Hiburan 135
+- Budaya 117
+- Cagar Alam 106
+- Bahari 47
+- Tempat Ibadah 17
+- Pusat Perbelanjaan 15
+  
+4. Distribusi Category
+- Visualisasi dilakukan menggunakan barplot horizontal terhadap atribut Category dari data tempat wisata.
+- Menghitung frekuensi jumlah tempat wisata per kategori.
+Kesimpulan:
+- Kategori Taman Hiburan, Budaya, dan Cagar Alam merupakan kategori tempat wisata yang paling banyak tersedia.
+- Sementara kategori seperti Pusat Perbelanjaan dan Tempat Ibadah memiliki jumlah tempat wisata yang lebih sedikit.
+Hal ini menunjukkan bahwa sistem rekomendasi kemungkinan akan lebih kaya dalam menyarankan destinasi dari tiga kategori utama tersebut.
+![Distribusi category](https://github.com/user-attachments/assets/2bc8ed22-dfed-4886-8d70-dd8536af0ab6)
+
+5. Distribusi Rating
+- Visualisasi dilakukan menggunakan countplot untuk atribut Place_Ratings.
+- Menghitung jumlah rating untuk setiap skor dari 1 hingga 5.
+Kesimpulan:
+- Distribusi rating cukup merata antara skor 2 sampai 5, dengan skor 1 sedikit lebih rendah.
+- Skor 4 merupakan rating yang paling banyak diberikan.
+Hal ini menunjukkan bahwa user cenderung memberikan penilaian positif terhadap tempat wisata, dan hanya sedikit yang memberikan skor rendah.
+![Distribusi Rating](https://github.com/user-attachments/assets/c142e6d7-1758-427f-83c1-8ef1d5442e0b)
+
+6. Distribusi Lokasi
+- Visualisasi dilakukan menggunakan barplot horizontal terhadap atribut Location pada data user.
+- Menghitung frekuensi user berdasarkan kota asal.
+Kesimpulan:
+- Kota dengan jumlah user terbanyak adalah Bekasi, diikuti oleh Semarang, Yogyakarta, dan Bogor.
+- Beberapa kota seperti Madura, Nganjuk, dan Purwakarta memiliki jumlah pengguna yang sangat sedikit
+- Ini menunjukkan bahwa pengguna banyak berasal dari kota besar atau wilayah dengan populasi padat di Pulau Jawa
+- User tersebar dari berbagai kota di Indonesia, meskipun tidak merata.
+Informasi ini penting untuk memahami konsentrasi geografis pengguna, yang bisa digunakan untuk rekomendasi lokal atau berbasis lokasi.
+![Distribusi lokasi](https://github.com/user-attachments/assets/ffd4b56f-5b63-44c5-97d0-de2c1fd514cb)
+
+7. Distribusi usia user
+- Visualisasi menggunakan boxplot untuk menggambarkan sebaran usia user.
+- Data yang digunakan berasal dari atribut Age pada data user.
+Kesimpulan:
+- Usia user mayoritas berada pada rentang 20 hingga 40 tahun.
+- Median usia user adalah sekitar 29 tahun.
+- Tidak terdapat outlier yang ekstrem pada distribusi usia, menunjukkan data relatif bersih.
+Artinya, target pengguna aplikasi atau sistem rekomendasi ini cenderung berada pada usia produktif dan dewasa muda.
+![Distrubusi umur user](https://github.com/user-attachments/assets/17ebd67c-45d2-4ae6-a3a4-4f236507fb4d)
+
+8. Membuat worldcoud untuk category, nama tempat, lokasi, deskripsi dengan tujuannya untuk memahami distribusi dan frekuensi kata yang muncul dalam atribut-atribut penting yang digunakan untuk merekomendasikan tempat wisata
+- WordCloud Category menggambarkan frekuensi kemunculan tiap kategori wisata dalam dataset. Kata-kata yang lebih besar menunjukkan kategori yang lebih sering muncul. Misalnya, kategori seperti "Taman Hiburan", "Cagar Alam", dan "Budaya" mendominasi, yang berarti jenis tempat wisata ini paling banyak terdapat di data. Informasi ini penting untuk mengetahui minat umum pengguna atau dominasi kategori tertentu dalam sistem rekomendasi.
+![wordcloud category](https://github.com/user-attachments/assets/9563338f-5584-4b16-8e47-fc49a16afd6a)
+
+- WordCloud lokasi menunjukkan distribusi geografis tempat wisata. Nama provinsi dan kota seperti "Jawa Barat", "DKI Jakarta", "Jawa Tengah", dan "Sumatera Selatan" muncul cukup besar, menandakan bahwa sebagian besar tempat wisata dalam dataset berada di daerah-daerah tersebut. Informasi ini bisa digunakan untuk mempersonalisasi rekomendasi berdasarkan lokasi geografis pengguna.
+![wordcloud lokasi](https://github.com/user-attachments/assets/02e4e030-8abb-4e5f-9599-71bd61ff149a)
+
+- WordCloud nama tempat menampilkan nama-nama umum atau kata kunci yang sering muncul dalam penamaan tempat wisata. Misalnya, kata "Museum", "Taman", "Pantai", dan "Kampung" adalah nama tempat yang sering muncul. Ini membantu memahami jenis tempat wisata yang populer dan bisa digunakan dalam analisis berbasis konten atau klasifikasi jenis wisata.
+![wordcloud nama tempat](https://github.com/user-attachments/assets/e13bc8d1-bf36-45ff-942f-4ffc50d7a11c)
+
+- WordCloud deskripsi ini dihasilkan dari teks deskripsi tempat wisata. Tujuannya untuk mengekstrak kata-kata yang paling sering muncul dalam deskripsi dan dapat menggambarkan ciri khas tempat tersebut. Kata-kata seperti "yang", "dan", "dengan", "terletak", serta nama objek seperti "Pantai", "Taman", dan "Museum" sering muncul, menunjukkan bahwa deskripsi sering menyebutkan lokasi geografis, jenis objek, serta fasilitas atau karakteristik unik. Hasil ini bisa digunakan untuk fitur berbasis konten dalam sistem rekomendasi.
+![wordcloud deskripsi](https://github.com/user-attachments/assets/8203d45c-4f61-4d8c-9769-1240fd393512)
+
+   
+9. Tempat dengan Rata-Rata Rating Tertinggi (4.0)
+Semua tempat berikut mendapatkan rating rata-rata 4.0, menunjukkan kepuasan tinggi dari pengunjung:
+- Bukit Bintang Yogyakarta, Bukit Jamur, Wisata Agro Edukatif Istana Susu Cibugary, Bukit Moko, Museum Tekstil, Glamping Lakeside Rancabali, Kampung Cina, Teras Cikapundung BBWS, Sanghyang Heuleut, Pintoe Langit Dahromo
+- Tempat-tempat ini cenderung memiliki daya tarik visual atau edukatif, serta kemungkinan besar menawarkan pengalaman positif dan memuaskan.
+  
+10. Tempat dengan Rata-Rata Rating Terendah (2.0)
+Sebaliknya, tempat berikut mendapatkan rating terendah, yaitu 2.0, yang menandakan tingkat ketidakpuasan yang tinggi dari pengguna:
+- Wot Batu, Brown Canyon, Taman Tabanas, Tebing Breksi, Taman Barunawati, Taman, Bungkul, Pasar Tanah Abang, Patung Sura dan Buaya, Pantai Sanglen, Pantai Sepanjang
+- Rendahnya rating ini bisa disebabkan oleh kurangnya fasilitas, kebersihan, aksesibilitas, atau ekspektasi yang tidak terpenuhi.
+
+11. Tempat yang Paling Banyak Diberi Rating
+Berikut adalah tempat-tempat yang paling populer berdasarkan jumlah rating tertinggi:
+- Pantai Parangtritis (39 rating), Gunung Lalakon (39 rating), Gereja Perawan, Maria Tak Berdosa Surabaya (38 rating), Pantai Kesirat (37 rating), Taman Sungai Mudal (36 rating), Geoforest Watu Payung Turunan (34 rating), Kampung Batu Malakasari (34 rating), Pantai Marina (33 rating), Food Junction Grand Pakuwon (33 rating), Wisata Kuliner Pecenongan (33 rating)
+
+- Tempat-tempat ini menunjukkan tingkat kunjungan dan perhatian publik yang tinggi. Ini bisa dijadikan prioritas dalam pengembangan atau promosi pariwisata lebih lanjut.
 
 ## Data Preparation
 Tahap data preparation bertujuan untuk membersihkan, mengubah, dan menyiapkan data agar dapat digunakan secara optimal dalam pemodelan sistem rekomendasi tempat wisata. Pada proyek ini, terdapat tiga sumber data utama yang digunakan, yaitu:
-- tourisms: berisi informasi tentang tempat wisata, seperti name, category, city, dan description.
-- rating: berisi data rating dari pengguna terhadap tempat wisata, dengan kolom User_Id, Place_Id, dan Place_Ratings.
-- user: berisi informasi pengguna (tidak digunakan langsung dalam pemodelan, tetapi disiapkan untuk pengembangan lebih lanjut)
 - Menggabungkan dataset tourism dan rating berdasarkan Place_Id.
 - Menangani Missing Value
 - Menghapus data duplikat dengan drop_duplicates().
@@ -107,11 +191,11 @@ Tahap data preparation bertujuan untuk membersihkan, mengubah, dan menyiapkan da
 - Penanganan Price dengan Cek apakah 0 berarti gratis atau data tidak tersedia dan ditangani dengan median
 - Menggabungkan Dataframe city dan category sebagai fitur tambahan CBF
 - pembuatan list:
-  - Konversi kolom Place_Id menjadi list dan simpan sebagai place_id
-  - Ambil nilai dari kolom Place_Name dalam bentuk list
-  - Simpan kategori tempat wisata sebagai list
-  - Ubah deskripsi tempat wisata menjadi list
-  - Ekstrak data kota ke dalam list
+  1. Konversi kolom Place_Id menjadi list dan simpan sebagai place_id
+  2. Ambil nilai dari kolom Place_Name dalam bentuk list
+  3. Simpan kategori tempat wisata sebagai list
+  4. Ubah deskripsi tempat wisata menjadi list
+  5. Ekstrak data kota ke dalam list
 - Menggabungkan semua dataframe yang sudah dibuat menjadi tourisms
 - teks processing, membersihkan kolom deksripsi dengan mengubah lowercase, hilangkan angka, hilangkan tanda baca, hilangkan whitespace berlebih dan kolom deskripsi digabungkan ke dataframe tourisms
 - Membuat dataframe tourisms_unique untuk tempat wisata dan Penghapusan Duplikat
@@ -272,14 +356,9 @@ Pada collaborative filtering, fungsi `get_recommendations` digunakan untuk:
 Fungsi ini memungkinkan sistem memberikan rekomendasi berdasarkan pola dan kesamaan perilaku pengguna lain yang memiliki preferensi serupa
    
 ### Kesimpulan
-Sistem rekomendasi tempat wisata yang dikembangkan telah menggabungkan dua pendekatan utama:
-- Content-Based Filtering (menggunakan Cosine Similarity):
-Memberikan rekomendasi berdasarkan kemiripan fitur tempat wisata (kategori, deskripsi, kota). Cocok digunakan untuk pengguna baru yang belum memiliki histori rating.
+Sistem rekomendasi tempat wisata yang dikembangkan menggabungkan dua pendekatan utama, yaitu Content-Based Filtering dan Collaborative Filtering, untuk menghasilkan rekomendasi yang lebih personal dan adaptif. Pendekatan Content-Based Filtering, yang menggunakan kemiripan fitur seperti kategori, deskripsi, dan lokasi tempat wisata melalui metode cosine similarity, terbukti efektif dalam memberikan rekomendasi bagi pengguna baru yang belum memiliki histori rating. Sementara itu, pendekatan Collaborative Filtering berbasis Singular Value Decomposition (SVD) mengandalkan data rating dari banyak pengguna untuk menangkap pola preferensi tersembunyi.
 
-- Collaborative Filtering (menggunakan SVD):
-Mengandalkan data rating dari banyak pengguna untuk mengenali pola preferensi tersembunyi. Meskipun hasil evaluasi saat ini menunjukkan prediksi yang belum terlalu akurat, pendekatan ini memiliki potensi tinggi jika jumlah interaksi pengguna bertambah..
-
-Hasil evaluasi menunjukkan:
-- Content-based filtering memberikan cakupan rekomendasi yang baik dengan recall yang tinggi, namun precision masih perlu ditingkatkan agar hasil lebih relevan.
-- Collaborative filtering menunjukkan prediksi yang belum cukup presisi, tetapi dapat ditingkatkan dengan dataset yang lebih lengkap dan padat.
-- Kombinasi kedua pendekatan ini (hybrid system) dapat saling melengkapi, mengatasi tantangan seperti cold start dan sparsity, serta meningkatkan personalisasi dalam sistem rekomendasi tempat wisata.
+### Daftar Pustaka
+[1] G. Adomavicius and A. Tuzhilin, "Toward the next generation of recommender systems: A survey of the state-of-the-art and possible extensions," IEEE Transactions on Knowledge and Data Engineering, vol. 17, no. 6, pp. 734–749, Jun. 2005. [Online]. Available: https://ieeexplore.ieee.org/document/1423975
+Hasil evaluasi menunjukkan bahwa Content-Based Filtering mampu memberikan cakupan rekomendasi yang baik dengan nilai recall yang tinggi, meskipun nilai precision-nya masih perlu ditingkatkan agar rekomendasi menjadi lebih relevan. Di sisi lain, Collaborative Filtering menunjukkan performa prediksi yang belum optimal akibat keterbatasan jumlah interaksi pengguna, namun memiliki potensi besar untuk meningkat seiring bertambahnya data rating yang tersedia.
+[2] D. Shrestha, T. Wenan, D. Shrestha, N. Rajkarnikar, and S.-R. Jeong, "Personalized Tourist Recommender System: A Data-Driven and Machine-Learning Approach," Computation, vol. 12, no. 3, p. 59, 2024. [Online]. Available: https://doi.org/10.3390/computation12030059
