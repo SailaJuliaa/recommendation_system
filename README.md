@@ -200,6 +200,12 @@ Tahap data preparation bertujuan untuk membersihkan, mengubah, dan menyiapkan da
 - teks processing, membersihkan kolom deksripsi dengan mengubah lowercase, hilangkan angka, hilangkan tanda baca, hilangkan whitespace berlebih dan kolom deskripsi digabungkan ke dataframe tourisms
 - Membuat dataframe tourisms_unique untuk tempat wisata dan Penghapusan Duplikat
    - Menghapus duplikasi tempat wisata berdasarkan nama dari dataframe tourisms menggunakan drop_duplicates dan mereset indeksnya, agar tidak muncul rekomendasi dari entitas yang sama.
+- Penggabungan Fitur untuk model content based filtering
+  - Atribut category, description, dan city digabungkan ke dalam satu kolom combined, untuk mewakili keseluruhan karakteristik tempat wisata.
+- Vektorisasi Teks untuk model content based filtering
+  -  Data `combined` diubah menjadi vektor numerik menggunakan `CountVectorizer` (dengan penghapusan stop words) berdasarkan frekuensi kata (bag-of-words).
+- Pembuatan User-Item Matrix untuk collaborative filtering
+  - Menggunakan pivot table, data rating diubah menjadi matriks pengguna-tempat, dengan pengguna sebagai baris dan tempat sebagai kolom. Nilai adalah rating yang diberikan.
 
 ## Modeling
 Pada tahap modeling, digunakan dua algoritma sistem rekomendasi yang berbeda, yaitu:
@@ -212,21 +218,15 @@ Pada metode content-based filtering, sistem merekomendasikan tempat wisata berda
 #### Cara Kerja dan Parameter
 Langkah-langkah yang dilakukan dalam proses content-based filtering pada sistem ini adalah sebagai berikut:
 ##### Alur Kerja Fungsi rekomendasi_wisata:
-1. Penggabungan Fitur
-- Atribut category, description, dan city digabungkan ke dalam satu kolom combined, untuk mewakili keseluruhan karakteristik tempat wisata.
-2. Vektorisasi Teks
-- Data `combined` diubah menjadi vektor numerik menggunakan `CountVectorizer` (dengan penghapusan stop words).
-3. Perhitungan Similarity
+1. Perhitungan Similarity
 - Matriks Cosine Similarity dihitung dari hasil vektorisasi untuk mengetahui tingkat kemiripan antar tempat wisata.
-4. Pemilihan Top-N Rekomendasi
+2. Pemilihan Top-N Rekomendasi
 - Tempat wisata dengan skor kemiripan tertinggi (kecuali tempat input) diurutkan dan dipilih Top-N untuk ditampilkan.
 
 #### Output
 Sistem mengembalikan informasi `name`, `category`, `description`, dan `city` dari tempat wisata yang direkomendasikan.
 
 #### Teknologi yang Digunakan
-- CountVectorizer
-  Mengubah teks gabungan menjadi vektor berdasarkan frekuensi kata (bag-of-words).
 - Cosine Similarity
   Mengukur tingkat kemiripan antar vektor tempat wisata.
 
@@ -249,14 +249,12 @@ Model collaborative filtering dalam proyek ini mempelajari pola rating pengguna 
 
 #### Cara Kerja
 ##### Alur Kerja Sistem Rekomendasi:
-1. Pembuatan User-Item Matrix
-- Menggunakan pivot table, data rating diubah menjadi matriks pengguna-tempat, dengan pengguna sebagai baris dan tempat sebagai kolom. Nilai adalah rating yang diberikan.
-2. Pemodelan dengan SVD
+1. Pemodelan dengan SVD
 - Matriks rating didekomposisi menggunakan TruncatedSVD menjadi matriks pengguna dan tempat wisata berdimensi rendah (n\_components=20).
 - Pendekatan ini memungkinkan identifikasi pola preferensi tersembunyi.
-3. Prediksi Rating
+2. Prediksi Rating
 - Setelah pembelajaran, matriks prediksi dibentuk dari hasil perkalian dot product antara representasi pengguna dan tempat wisata.
-4. Fungsi `get_recommendations`
+3. Fungsi `get_recommendations`
 - Fungsi ini menerima `User_Id`, memeriksa tempat wisata yang belum dirating, lalu merekomendasikan tempat dengan prediksi skor tertinggi.
 
 #### Output
